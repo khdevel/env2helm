@@ -1,0 +1,28 @@
+FROM alpine:3.12.2
+
+RUN apk add --no-cache curl ca-certificates python3 py-pip bash jq &&\
+    pip3 --no-cache-dir install ruamel.yaml awscli
+
+ENV helm_version=v3.4.1
+ENV helm_checksum=538f85b4b73ac6160b30fd0ab4b510441aa3fa326593466e8bf7084a9c288420
+
+ENV kubectl_version=v1.19.5
+ENV kubectl_checksum=5f5a0bebde8a8782b2d9de9bd314dce722f9f960bee090b121ea5ac38cf4377d
+
+RUN curl -s https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/amd64/kubectl > /tmp/kubectl &&\
+    sha256sum /tmp/kubectl | grep -q ${kubectl_checksum} &&\
+    chmod +x /tmp/kubectl &&\
+    mv /tmp/kubectl /usr/local/bin/ &&\
+    rm -rf /tmp/* &&\
+    curl -s https://get.helm.sh/helm-${helm_version}-linux-amd64.tar.gz > /tmp/helm.tar.gz &&\
+    sha256sum /tmp/helm.tar.gz | grep -q ${helm_checksum} &&\
+    tar xzf /tmp/helm.tar.gz -C /tmp/ &&\
+    chmod +x /tmp/linux-amd64/helm &&\
+    mv /tmp/linux-amd64/helm /usr/local/bin &&\
+    rm -rf /tmp/*
+
+COPY env2helm kait-for-it parse-kube-config /usr/local/bin/
+
+SHELL ["/bin/bash", "-c"]
+
+CMD ["/bin/bash"]
